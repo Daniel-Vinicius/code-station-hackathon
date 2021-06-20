@@ -8,6 +8,7 @@ import { Ingredient } from "../entities/ingredient";
 
 class IngredientsRepository implements IIngredientsRepository {
   private ingredientRepository: Repository<Ingredient>;
+
   constructor() {
     this.ingredientRepository = getRepository(Ingredient);
   }
@@ -20,7 +21,6 @@ class IngredientsRepository implements IIngredientsRepository {
 
   async delete(id: string): Promise<void> {
     await this.ingredientRepository.delete({ id });
-
   }
 
   async list(id: string): Promise<Ingredient[]> {
@@ -33,34 +33,45 @@ class IngredientsRepository implements IIngredientsRepository {
 
   async create(
     user: User,
+
     { name, unit_price, unit_type }: ICreateIngredientDTO
   ): Promise<Ingredient> {
     const ingredient = this.ingredientRepository.create({
       user,
+
       name,
+
       unit_price,
+
       unit_type,
     });
+
     return this.ingredientRepository.save(ingredient);
   }
 
   async findByName(name: string): Promise<Ingredient | undefined> {
     const ingredient = await this.ingredientRepository.findOne({ name });
+
     return ingredient;
   }
 
   async update(
     id: string,
+
     { unit_type, name, unit_price }: IUpdateIngredientDTO
   ): Promise<Ingredient> {
     await this.ingredientRepository.update(
       { id },
+
       {
         unit_price,
+
         unit_type,
+
         name,
       }
     );
+
     return this.ingredientRepository.findOneOrFail({
       where: { id },
     });
