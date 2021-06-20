@@ -7,9 +7,11 @@ import { Product } from "../entities/products";
 
 export class ProductsRepository implements IProductsRepository {
   private productsRepository: Repository<Product>;
+
   constructor() {
     this.productsRepository = getRepository(Product);
   }
+
   async delete(id: string): Promise<void> {
     this.productsRepository.delete(id);
   }
@@ -20,33 +22,53 @@ export class ProductsRepository implements IProductsRepository {
     });
   }
 
-
   list(id: string): Promise<Product[]> {
     return this.productsRepository.find({
       where: {
         user: { id },
       },
+
       relations: ["ingredients"],
     });
   }
 
   async update(
     id: string,
+
     name: string,
-    ingredients: Ingredient[]
+
+    ingredients: Ingredient[],
+
+    total_price: number
   ): Promise<Product> {
     const oldProduct = await this.productsRepository.findOneOrFail(id, {
       relations: ["ingredients"],
     });
-    if (ingredients[0]) {
 
+    if (ingredients[0]) {
       await this.productsRepository
+
         .createQueryBuilder()
+
         .relation("ingredients")
+
         .of(oldProduct)
+
         .addAndRemove(ingredients, oldProduct.ingredients);
     }
-    await this.productsRepository.update({ id }, { name });
+
+    const qb = this.productsRepository.createQueryBuilder().update(Product);
+
+    if (name) {
+      qb.set({ name });
+    }
+
+    if (total_price !== 0) {
+      qb.set({ total_price });
+    }
+
+    await qb.where({ id }).execute();
+
     return this.productsRepository.findOneOrFail(id, {
       relations: ["ingredients"],
     });
@@ -54,22 +76,29 @@ export class ProductsRepository implements IProductsRepository {
 
   async findById(id: string): Promise<Product> {
     return this.productsRepository.findOneOrFail(id, {
-      relations: ["ingredients"],
-
+      relations: ["ingredients", "user"],
     });
   }
 
   async create(
     user: User,
+
     name: string,
-    ingredients: Ingredient[]
+
+    ingredients: Ingredient[],
+
+    total_price: number
   ): Promise<Product> {
     const product = this.productsRepository.create({
       name,
+
       ingredients,
+
       user,
-      total_price: 0,
+
+      total_price,
     });
+
     return this.productsRepository.save(product);
   }
 }
